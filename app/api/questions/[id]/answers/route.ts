@@ -1,56 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentUser } from "@/lib/session"
-import { canMentorAnswerQuestion, canViewQuestion } from "@/lib/authz"
 import { badRequest, forbidden, notFound, unauthorized } from "@/lib/api"
-import { QuestionStatus } from "@prisma/client"
-
-const CONTENT_MAX = 5000
-
-const answerSelect = {
-  id: true,
-  content: true,
-  createdAt: true,
-  updatedAt: true,
-  mentor: {
-    select: {
-      id: true,
-      name: true,
-    },
-  },
-} as const
-
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const user = await getCurrentUser()
-  if (!user) return unauthorized()
-
-  const { id } = await params
-
-  const question = await prisma.question.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      studentId: true,
-      mentorId: true,
-      visibility: true,
-      moderationStatus: true,
-    },
-  })
-
-  if (!question || !canViewQuestion(user, question)) {
-    return notFound("Question not found")
-  }
-
-  const answers = await prisma.answer.findMany({
-    where: { questionId: id },
-    orderBy: { createdAt: "asc" },
-    select: answerSelect,
-  })
-
-  return Response.json({ items: answers })
-}
+import { visibleWhere } from "@/lib/questions"
+import { QuestionStatus, Role } from "@prisma/client"
 
 export async function POST(
   request: Request,
@@ -58,74 +10,45 @@ export async function POST(
 ) {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
+  if (user.role !== Role.MENTOR) return forbidden("Only mentors can answer questions")
 
   const { id } = await params
-
-  const question = await prisma.question.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      mentorId: true,
-      visibility: true,
-      moderationStatus: true,
-      status: true,
-    },
+  const question = await prisma.question.findFirst({
+    where: { AND: [{ id }, visibleWhere(user)] },
+    select: { id: true, studentId: true },
   })
 
   if (!question) return notFound("Question not found")
-  if (!canMentorAnswerQuestion(user, question)) {
-    return forbidden("You are not allowed to answer this question")
-  }
-  if (question.status === QuestionStatus.CLOSED) {
-    return forbidden("This question is closed")
-  }
 
   let body: Record<string, unknown>
-  try {
-    body = await request.json()
-  } catch {
-    return badRequest("Body must be valid JSON")
-  }
+  try { body = await request.json() } catch { return badRequest("Body must be valid JSON") }
 
-  const content = typeof body.content === "string" ? body.content.trim() : ""
-  if (!content) return badRequest("content is required")
-  if (content.length > CONTENT_MAX) {
-    return badRequest("content must be at most 5000 characters")
+  const answerContent = typeof body.content === "string" ? body.content.trim() : ""
+  if (answerContent.length < 1 || answerContent.length > 5000) {
+    return badRequest("content must be 1-5000 characters")
   }
 
   const answer = await prisma.$transaction(async (tx) => {
     const created = await tx.answer.create({
-      data: {
-        content,
-        questionId: id,
-        mentorId: user.id,
-      },
-      select: answerSelect,
-    })
-
-    await tx.question.updateMany({
-      where: {
-        id,
-        status: QuestionStatus.AWAITING_RESPONSE,
-      },
-      data: {
-        status: QuestionStatus.ANSWERED,
+      data: { content: answerContent, questionId: id, mentorId: user.id },
+      select: {
+        id: true, content: true, createdAt: true, updatedAt: true,
+        mentor: { select: { id: true, name: true } },
       },
     })
-
+    await tx.question.update({
+      where: { id },
+      data: { status: QuestionStatus.ANSWERED },
+    })
+    await tx.notification.create({
+      data: {
+        userId: question.studentId,
+        title: "Your question was answered",
+        message: "A mentor has answered your question.",
+      },
+    })
     return created
   })
 
-  const updatedQuestion = await prisma.question.findUnique({
-    where: { id },
-    select: { status: true },
-  })
-
-  return Response.json(
-    {
-      item: answer,
-      questionStatus: updatedQuestion?.status ?? QuestionStatus.ANSWERED,
-    },
-    { status: 201 }
-  )
+  return Response.json(answer, { status: 201 })
 }
