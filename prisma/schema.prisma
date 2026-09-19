@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum QuestionVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum ModerationStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum QuestionStatus {
+  AWAITING_RESPONSE
+  ANSWERED
+  CLOSED
+}
+
+enum QuestionCategory {
+  BOARD_EXAMS
+  WELLNESS_BURNOUT
+  CLINICAL_ROTATIONS
+  ACADEMICS
+  CAREER
+  RESEARCH
+  STUDY_SKILLS
+  OTHER
+}
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  name              String?
+  role              Role       @default(STUDENT)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  assignedMentorId  String?
+  assignedMentor    User?      @relation("MentorStudents", fields: [assignedMentorId], references: [id])
+  assignedStudents  User[]     @relation("MentorStudents")
+
+  questions         Question[] @relation("StudentQuestions")
+  mentorQuestions   Question[] @relation("MentorQuestions")
+  answers           Answer[]
+
+  @@index([role])
+  @@index([assignedMentorId])
+}
+
+model Question {
+  id                String             @id @default(cuid())
+  title             String
+  content           String
+  category          QuestionCategory   @default(OTHER)
+  visibility        QuestionVisibility @default(PRIVATE)
+  isAnonymous       Boolean            @default(false)
+  status            QuestionStatus     @default(AWAITING_RESPONSE)
+  moderationStatus  ModerationStatus   @default(NOT_REQUIRED)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  studentId         String
+  student            User               @relation("StudentQuestions", fields: [studentId], references: [id])
+
+  mentorId          String?
+  mentor            User?              @relation("MentorQuestions", fields: [mentorId], references: [id])
+
+  answers           Answer[]
+
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([status])
+  @@index([visibility, moderationStatus])
+  @@index([createdAt])
+}
+
+model Answer {
+  id          String   @id @default(cuid())
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  mentorId    String
+  mentor      User     @relation(fields: [mentorId], references: [id])
+
+  @@index([questionId])
+  @@index([mentorId])
+}
