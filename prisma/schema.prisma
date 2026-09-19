@@ -56,6 +56,8 @@ model User {
   questions         Question[] @relation("StudentQuestions")
   mentorQuestions   Question[] @relation("MentorQuestions")
   answers           Answer[]
+  boosts            QuestionBoost[]
+  notifications     Notification[]
 
   @@index([role])
   @@index([assignedMentorId])
@@ -80,6 +82,7 @@ model Question {
   mentor            User?              @relation("MentorQuestions", fields: [mentorId], references: [id])
 
   answers           Answer[]
+  boosts            QuestionBoost[]
 
   @@index([studentId])
   @@index([mentorId])
@@ -102,4 +105,34 @@ model Answer {
 
   @@index([questionId])
   @@index([mentorId])
+}
+
+
+model QuestionBoost {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, userId])
+  @@index([questionId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
 }
