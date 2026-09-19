@@ -1,8 +1,9 @@
 import { auth, signOut } from "@/auth"
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 
 type Question = {
-  id: number
+  id: string
   title: string
   category: string
   status: string
@@ -14,8 +15,13 @@ export default async function Dashboard() {
 
   const name = session.user?.email?.split("@")[0]
 
-  const res = await fetch("http://localhost:3000/api/questions", { cache: "no-store" })
-  const questions: Question[] = await res.json()
+  const res = await fetch("http://localhost:3000/api/questions", {
+    cache: "no-store",
+    headers: { cookie: (await headers()).get("cookie") ?? "" },
+  })
+
+  const data: { items?: Question[] } = res.ok ? await res.json() : {}
+  const questions: Question[] = data.items ?? []
 
   return (
     <div style={{ padding: 24, fontFamily: "sans-serif" }}>
