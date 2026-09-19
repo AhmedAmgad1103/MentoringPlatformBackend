@@ -19,6 +19,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      const frontendOrigin = process.env.FRONTEND_URL || "http://localhost:8443"
+
+      if (url.startsWith(frontendOrigin)) {
+        return url
+      }
+
+      if (url.startsWith("/")) {
+        return frontendOrigin + url
+      }
+
+      return baseUrl
+    },
     jwt({ token, user }) {
       if (user) token.role = (user as unknown as { role?: string }).role
       return token
