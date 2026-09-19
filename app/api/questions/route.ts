@@ -155,7 +155,11 @@ export async function POST(request: Request) {
   }
 
   const title = typeof body.title === "string" ? body.title.trim() : ""
-  const content = typeof body.content === "string" ? body.content.trim() : ""
+  const content = typeof body.content === "string"
+    ? body.content.trim()
+    : typeof body.body === "string"
+      ? body.body.trim()
+      : ""
 
   if (title.length < 3 || title.length > TITLE_MAX) {
     return badRequest("title must be 3-150 characters")
@@ -173,12 +177,19 @@ export async function POST(request: Request) {
     category = body.category
   }
 
-  const askType = body.askType
-  if (
-    typeof askType !== "string" ||
-    !(ASK_TYPES as readonly string[]).includes(askType)
-  ) {
-    return badRequest("askType must be MY_MENTOR, ANY_MENTOR, or ANONYMOUS")
+  let askType = body.askType
+  if (typeof askType !== "string" || !(ASK_TYPES as readonly string[]).includes(askType)) {
+    const privacy = typeof body.privacy === "string" ? body.privacy.toLowerCase() : ""
+    const legacyMap: Record<string, (typeof ASK_TYPES)[number]> = {
+      private: "MY_MENTOR",
+      "any-mentor": "ANY_MENTOR",
+      "anon-public": "ANONYMOUS",
+      "anon-private": "ANONYMOUS",
+    }
+    askType = legacyMap[privacy]
+    if (!askType) return badRequest("askType must be MY_MENTOR, ANY_MENTOR, or ANONYMOUS")
+    if (privacy === "anon-public") body.visibility = "PUBLIC"
+    if (privacy === "anon-private") body.visibility = "PRIVATE"
   }
 
   let mentorId: string | null = null
