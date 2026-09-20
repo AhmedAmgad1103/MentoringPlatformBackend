@@ -94,6 +94,18 @@ export async function DELETE(
     where: { questionId: id },
   })
 
+  if (remainingAnswers === 0) {
+    await prisma.question.updateMany({
+      where: {
+        id,
+        status: "ANSWERED",
+      },
+      data: {
+        status: "AWAITING_RESPONSE",
+      },
+    })
+  }
+
   return Response.json({
     deleted: true,
     questionHasAnswers: remainingAnswers > 0,
