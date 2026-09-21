@@ -34,11 +34,29 @@ enum QuestionCategory {
   BOARD_EXAMS
   WELLNESS_BURNOUT
   CLINICAL_ROTATIONS
+  CLINICAL_SKILLS
+  RESIDENCY_MATCH
   ACADEMICS
   CAREER
   RESEARCH
   STUDY_SKILLS
   OTHER
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  MISINFORMATION
+  PRIVACY
+  OFF_TOPIC
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  DISMISSED
+  ACTION_TAKEN
 }
 
 model User {
@@ -58,8 +76,10 @@ model User {
   answers           Answer[]
   boosts            QuestionBoost[]
   notifications     Notification[]
-  sentMessages       Message[]   @relation("SentMessages")
-  receivedMessages   Message[]   @relation("ReceivedMessages")
+  sentMessages      Message[]  @relation("SentMessages")
+  receivedMessages  Message[]  @relation("ReceivedMessages")
+  reportsMade       QuestionReport[] @relation("QuestionReportsMade")
+  reportsReviewed   QuestionReport[] @relation("QuestionReportsReviewed")
 
   @@index([role])
   @@index([assignedMentorId])
@@ -85,6 +105,7 @@ model Question {
 
   answers           Answer[]
   boosts            QuestionBoost[]
+  reports           QuestionReport[]
 
   @@index([studentId])
   @@index([mentorId])
@@ -108,7 +129,6 @@ model Answer {
   @@index([questionId])
   @@index([mentorId])
 }
-
 
 model QuestionBoost {
   id         String   @id @default(cuid())
@@ -155,4 +175,28 @@ model Notification {
 
   @@index([userId, read])
   @@index([createdAt])
+}
+
+model QuestionReport {
+  id           String       @id @default(cuid())
+  reason       ReportReason
+  details      String?
+  status       ReportStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  reviewedAt   DateTime?
+
+  questionId   String
+  question     Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  reporterId   String
+  reporter     User         @relation("QuestionReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  reviewedById String?
+  reviewedBy   User?        @relation("QuestionReportsReviewed", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@unique([questionId, reporterId])
+  @@index([questionId, status])
+  @@index([reporterId])
+  @@index([status, createdAt])
 }
