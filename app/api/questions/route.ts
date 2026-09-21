@@ -202,9 +202,12 @@ export async function POST(request: Request) {
       return conflict("You don't have an assigned mentor yet")
     }
     mentorId = user.assignedMentorId
-  } else if (askType === "ANY_MENTOR") {
-    visibility = QuestionVisibility.PUBLIC
+    // Only direct, non-anonymous mentee -> assigned mentor questions skip moderation.
     moderationStatus = ModerationStatus.NOT_REQUIRED
+  } else if (askType === "ANY_MENTOR") {
+    // Community questions must be approved before they are visible.
+    visibility = QuestionVisibility.PUBLIC
+    moderationStatus = ModerationStatus.PENDING
     mentorId = null
   } else {
     isAnonymous = true
@@ -229,6 +232,8 @@ export async function POST(request: Request) {
         return badRequest("mentorId is required for an anonymous private question")
       }
 
+      // Anonymous questions always require moderation, including private ones.
+      moderationStatus = ModerationStatus.PENDING
       mentorId = chosen
     }
   }
