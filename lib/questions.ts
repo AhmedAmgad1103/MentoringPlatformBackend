@@ -20,23 +20,33 @@ export function visibleWhere(user: CurrentUser): Prisma.QuestionWhereInput {
   if (user.role === Role.MENTOR) {
     return {
       OR: [
-        { mentorId: user.id },
+        {
+          mentorId: user.id,
+          OR: [
+            { moderationStatus: ModerationStatus.NOT_REQUIRED },
+            { moderationStatus: ModerationStatus.APPROVED },
+          ],
+        },
         publicAndApproved,
-        mentorCommunityWhere,
       ],
     }
   }
 
   return {
     OR: [
-      { studentId: user.id },
+      {
+        AND: [
+          { studentId: user.id },
+          { moderationStatus: { not: ModerationStatus.REJECTED } },
+        ],
+      },
       publicAndApproved,
     ],
   }
 }
 
 export const publicFeedWhere = publicAndApproved
-export const mentorCommunityFeedWhere = mentorCommunityWhere
+export const mentorCommunityFeedWhere = publicAndApproved
 
 const baseSelect = {
   id: true,
@@ -52,13 +62,14 @@ const baseSelect = {
   studentId: true,
   student: { select: { id: true, name: true } },
   mentor: { select: { id: true, name: true } },
-  _count: { select: { boosts: true, answers: true } },
+  _count: { select: { boosts: true, answers: true, reports: true } },
 } satisfies Prisma.QuestionSelect
 
 export function listSelect(viewerId: string) {
   return {
     ...baseSelect,
     boosts: { where: { userId: viewerId }, select: { id: true } },
+    reports: { where: { reporterId: viewerId }, select: { id: true, status: true } },
   } satisfies Prisma.QuestionSelect
 }
 
@@ -84,7 +95,7 @@ type DetailRow = Prisma.QuestionGetPayload<{ select: ReturnType<typeof detailSel
 export function toQuestionDTO(row: ListRow | DetailRow, viewer: CurrentUser) {
   const hideStudent = row.isAnonymous && viewer.role !== Role.ADMIN
 
-  const { studentId, student, _count, boosts, ...rest } = row
+  const { studentId, student, _count, boosts, reports, ...rest } = row
 
   return {
     ...rest,
@@ -92,6 +103,8 @@ export function toQuestionDTO(row: ListRow | DetailRow, viewer: CurrentUser) {
     student: hideStudent ? null : student,
     boostCount: _count.boosts,
     answerCount: _count.answers,
+    reportedByMe: reports.length > 0,
+    reportCount: viewer.role === Role.ADMIN ? _count.reports : undefined,
     boostedByMe: boosts.length > 0,
   }
 }
