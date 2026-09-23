@@ -11,11 +11,14 @@ export async function GET(request: Request) {
 
   const users = await prisma.user.findMany({
     where: { email },
-    select: { role: true },
+    select: { role: true, mentorStatus: true },
     orderBy: { role: "asc" },
   })
 
   return NextResponse.json({
-    roles: users.map((user) => user.role),
+    roles: users
+      .filter((user) => user.role !== "MENTOR" || user.mentorStatus !== "PENDING")
+      .map((user) => user.role),
+    mentorPending: users.some((user) => user.role === "MENTOR" && user.mentorStatus === "PENDING"),
   })
 }
