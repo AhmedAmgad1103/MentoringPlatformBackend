@@ -61,7 +61,7 @@ enum ReportStatus {
 
 model User {
   id                String     @id @default(cuid())
-  email             String     @unique
+  email             String
   name              String?
   role              Role       @default(STUDENT)
   createdAt         DateTime   @default(now())
@@ -81,6 +81,8 @@ model User {
   reportsMade       QuestionReport[] @relation("QuestionReportsMade")
   reportsReviewed   QuestionReport[] @relation("QuestionReportsReviewed")
 
+  @@unique([email, role])
+  @@index([email])
   @@index([role])
   @@index([assignedMentorId])
 }
