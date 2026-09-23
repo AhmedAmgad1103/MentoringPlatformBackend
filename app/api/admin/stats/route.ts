@@ -11,13 +11,15 @@ export async function GET() {
   const [
     totalStudents,
     totalMentors,
+    pendingMentors,
     totalQuestions,
     questionsAnswered,
     pendingModeration,
     reportedContent,
   ] = await Promise.all([
     prisma.user.count({ where: { role: Role.STUDENT } }),
-    prisma.user.count({ where: { role: Role.MENTOR } }),
+    prisma.user.count({ where: { role: Role.MENTOR, OR: [{ mentorStatus: "NONE" }, { mentorStatus: "APPROVED" }] } }),
+    prisma.user.count({ where: { role: Role.MENTOR, mentorStatus: "PENDING" } }),
     prisma.question.count(),
     prisma.question.count({ where: { answers: { some: {} } } }),
     prisma.question.count({ where: { moderationStatus: ModerationStatus.PENDING } }),
@@ -27,7 +29,7 @@ export async function GET() {
   return Response.json({
     totalStudents,
     totalMentors,
-    pendingMentors: 0,
+    pendingMentors,
     totalQuestions,
     questionsAnswered,
     pendingModeration,
