@@ -36,18 +36,23 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     devRole = DEV_ROLE_MAP[String(raw ?? "").toLowerCase()]
   }
 
-  let user = await prisma.user.upsert({
-    where: { email },
+  const selectedRole = devRole ?? Role.STUDENT
+
+  const user = await prisma.user.upsert({
+    where: {
+      email_role: {
+        email,
+        role: selectedRole,
+      },
+    },
     update: {},
     create: {
       email,
       name: email.split("@")[0],
-      role: devRole ?? Role.STUDENT,
+      role: selectedRole,
     },
     select: userSelect,
   })
 
-  // An existing database user keeps their persisted role. The development
-  // role is only used when the account is first created.
   return user
 }
