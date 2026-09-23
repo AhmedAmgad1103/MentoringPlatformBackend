@@ -49,6 +49,7 @@ export async function GET(request: Request) {
         email: true,
         name: true,
         role: true,
+        mentorStatus: true,
         createdAt: true,
         assignedMentor: {
           select: {
