@@ -12,6 +12,13 @@ enum Role {
   ADMIN
 }
 
+enum MentorStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum QuestionVisibility {
   PRIVATE
   PUBLIC
@@ -64,6 +71,7 @@ model User {
   email             String
   name              String?
   role              Role       @default(STUDENT)
+  mentorStatus      MentorStatus @default(NONE)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
