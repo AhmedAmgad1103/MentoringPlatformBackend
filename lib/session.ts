@@ -47,13 +47,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     select: userSelect,
   })
 
-  if (devRole && user.role !== devRole) {
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { role: devRole },
-      select: userSelect,
-    })
-  }
-
+  // An existing database user keeps their persisted role. The development
+  // role is only used when the account is first created.
   return user
 }
