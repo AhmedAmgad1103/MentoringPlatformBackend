@@ -225,6 +225,8 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+  kind      String   @default("GENERAL")
+  dedupeKey String?  @unique
 
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentUser } from "@/lib/session"
 import { unauthorized } from "@/lib/api"
-import { getRewardMonth } from "@/lib/rewards"
+import { getRewardCycle } from "@/lib/rewards"
 import { MentorStatus, Role } from "@prisma/client"
 
 export async function GET() {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const month = getRewardMonth()
+  const cycle = getRewardCycle()
 
   const [mentors, totals] = await Promise.all([
     prisma.user.findMany({
@@ -25,7 +25,7 @@ export async function GET() {
     prisma.mentorPoint.groupBy({
       by: ["mentorId"],
       where: {
-        month,
+        cycle,
         points: { gt: 0 },
       },
       _sum: { points: true },

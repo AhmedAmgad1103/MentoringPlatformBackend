@@ -7,8 +7,17 @@ export const REWARD_POINTS = {
   ANY_MENTOR_RESPONSE: 1,
 } as const
 
-export function getRewardMonth(date = new Date()) {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`
+// The leaderboard is intentionally a single 2027 cycle. It resets on
+// January 1, 2027 and stays on that cycle until this value is changed.
+export const REWARD_CYCLE_START = "2027-01-01"
+export const REWARD_CYCLE = "2027"
+
+export function getRewardCycle() {
+  return REWARD_CYCLE
+}
+
+export function getRewardCycle() {
+  return getRewardCycle()
 }
 
 export async function awardMentorPoints(
@@ -22,7 +31,7 @@ export async function awardMentorPoints(
     voterId?: string
   }
 ) {
-  const month = getRewardMonth()
+  const month = getRewardCycle()
 
   return tx.mentorPoint.upsert({
     where: { eventKey: input.eventKey },
@@ -53,7 +62,7 @@ export async function setHelpfulVoteReward(
     active: boolean
   }
 ) {
-  const month = getRewardMonth()
+  const month = getRewardCycle()
   const eventKey = `helpful:${month}:${input.answerId}:${input.voterId}`
 
   return tx.mentorPoint.upsert({
