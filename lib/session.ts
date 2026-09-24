@@ -1,12 +1,13 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { Role } from "@prisma/client"
+import { Role, MentorStatus } from "@prisma/client"
 
 export type CurrentUser = {
   id: string
   email: string
   name: string | null
   role: Role
+  mentorStatus: MentorStatus
   assignedMentorId: string | null
 }
 
@@ -15,6 +16,7 @@ const userSelect = {
   email: true,
   name: true,
   role: true,
+  mentorStatus: true,
   assignedMentorId: true,
 } as const
 
@@ -53,6 +55,10 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     },
     select: userSelect,
   })
+
+  if (user.role === Role.MENTOR && user.mentorStatus !== MentorStatus.APPROVED) {
+    return null
+  }
 
   return user
 }
