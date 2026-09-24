@@ -25,7 +25,7 @@ export async function GET() {
     prisma.mentorPoint.groupBy({
       by: ["mentorId"],
       where: {
-        cycle,
+        month: cycle,
         points: { gt: 0 },
       },
       _sum: { points: true },
@@ -55,7 +55,7 @@ export async function GET() {
       : null
 
   return Response.json({
-    month,
+    cycle,
     items,
     me,
   })
