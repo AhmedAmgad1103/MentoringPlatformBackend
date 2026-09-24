@@ -14,6 +14,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: existing.mentorStatus }, { status: existing.mentorStatus === MentorStatus.APPROVED ? 200 : 409 })
   }
 
+  const student = await prisma.user.findUnique({ where: { email_role: { email, role: Role.STUDENT } } })
+
   const mentor = await prisma.user.create({
     data: {
       email,
