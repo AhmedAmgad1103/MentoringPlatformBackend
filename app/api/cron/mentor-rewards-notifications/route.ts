@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   // 3 days out -> more urgent reminder
   // final 2 days -> daily reminder
   // 1st of the new month -> new-cycle reminder
-  const shouldNotify = day === 1 || daysLeft <= 7
+  const shouldNotify = day === 1 || daysLeft === 7 || daysLeft <= 3
   if (!shouldNotify) {
     return Response.json({ ok: true, sent: 0, daysLeft })
   }
