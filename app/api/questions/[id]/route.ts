@@ -31,7 +31,11 @@ export async function GET(
   const { answers, ...rest } = question
   return Response.json({
     ...toQuestionDTO(rest, user),
-    answers,
+    answers: answers.map(({ helpfulVotes, ...answer }) => ({
+      ...answer,
+      helpfulCount: helpfulVotes.length,
+      helpfulByMe: helpfulVotes.some((vote) => vote.userId === user.id),
+    })),
   })
 }
 

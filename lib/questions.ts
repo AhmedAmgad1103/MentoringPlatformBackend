@@ -84,6 +84,9 @@ export function detailSelect(viewerId: string) {
         createdAt: true,
         updatedAt: true,
         mentor: { select: { id: true, name: true } },
+        helpfulVotes: {
+          select: { userId: true },
+        },
       },
     },
   } satisfies Prisma.QuestionSelect
