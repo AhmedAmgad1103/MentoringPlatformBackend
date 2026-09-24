@@ -16,10 +16,6 @@ export function getRewardCycle() {
   return REWARD_CYCLE
 }
 
-export function getRewardCycle() {
-  return getRewardCycle()
-}
-
 export async function awardMentorPoints(
   tx: Prisma.TransactionClient,
   input: {
