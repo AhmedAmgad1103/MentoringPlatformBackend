@@ -45,6 +45,7 @@ model User {
   id                String     @id @default(cuid())
   email             String     @unique
   name              String?
+  avatarUrl         String?
   role              Role       @default(STUDENT)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
@@ -58,6 +59,8 @@ model User {
   answers           Answer[]
   boosts            QuestionBoost[]
   notifications     Notification[]
+  sentMessages      Message[]  @relation("SentMessages")
+  receivedMessages  Message[]  @relation("ReceivedMessages")
 
   @@index([role])
   @@index([assignedMentorId])
@@ -127,6 +130,7 @@ model Notification {
   id        String   @id @default(cuid())
   title     String
   message   String
+  kind      String   @default("SYSTEM")
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -135,4 +139,20 @@ model Notification {
 
   @@index([userId, read])
   @@index([createdAt])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  readAt      DateTime?
+
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, recipientId, createdAt])
+  @@index([recipientId, readAt])
 }
