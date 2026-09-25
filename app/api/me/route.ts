@@ -9,12 +9,24 @@ export async function GET() {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const assignedMentor = user.assignedMentorId
-    ? await prisma.user.findUnique({
-        where: { id: user.assignedMentorId },
-        select: { id: true, name: true },
-      })
-    : null
+  const [assignedMentor, approvedMentor] = await Promise.all([
+    user.assignedMentorId
+      ? prisma.user.findUnique({
+          where: { id: user.assignedMentorId },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve(null),
+    user.role === "STUDENT"
+      ? prisma.user.findFirst({
+          where: {
+            email: user.email,
+            role: "MENTOR",
+            mentorStatus: "APPROVED",
+          },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+  ])
 
   return Response.json({
     id: user.id,
@@ -23,6 +35,7 @@ export async function GET() {
     avatarUrl: user.avatarUrl,
     role: user.role,
     assignedMentor,
+    hasApprovedMentorAccount: Boolean(approvedMentor),
   })
 }
 
