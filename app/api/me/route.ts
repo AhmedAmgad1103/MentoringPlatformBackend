@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/session"
 import { badRequest, unauthorized } from "@/lib/api"
 
 const NAME_MAX = 100
-const AVATAR_MAX = 5 * 1024 * 1024
+const AVATAR_MAX = 7 * 1024 * 1024
 
 export async function GET() {
   const user = await getCurrentUser()
