@@ -10,7 +10,7 @@ export async function GET() {
   const mentors = await prisma.user.findMany({
     where: { role: Role.MENTOR },
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, avatarUrl: true },
   })
 
   return Response.json(
