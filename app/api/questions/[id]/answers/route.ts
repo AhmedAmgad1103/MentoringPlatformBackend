@@ -6,7 +6,7 @@ import { QuestionStatus, Role } from "@prisma/client"
 import {
   awardMentorPoints,
   REWARD_POINTS,
-  getRewardMonth,
+  getRewardCycle,
 } from "@/lib/rewards"
 
 export async function POST(
@@ -46,7 +46,7 @@ export async function POST(
       data: { status: QuestionStatus.ANSWERED },
     })
 
-    const eventMonth = getRewardMonth()
+    const eventMonth = getRewardCycle()
     await awardMentorPoints(tx, {
       mentorId: user.id,
       points: REWARD_POINTS.ANSWER,
