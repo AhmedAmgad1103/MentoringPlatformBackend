@@ -4,9 +4,9 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}))
   const email = String(body.email ?? "").trim().toLowerCase()
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.edu$/i.test(email)) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json(
-      { error: "A valid medical school .edu email is required." },
+      { error: "A valid email address is required." },
       { status: 400 },
     )
   }
