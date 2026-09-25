@@ -205,9 +205,15 @@ export async function POST(request: Request) {
     // Only direct, non-anonymous mentee -> assigned mentor questions skip moderation.
     moderationStatus = ModerationStatus.NOT_REQUIRED
   } else if (askType === "ANY_MENTOR") {
-    // Community questions must be approved before they are visible.
+    // Public, non-anonymous community questions may bypass moderation when enabled by an admin.
     visibility = QuestionVisibility.PUBLIC
-    moderationStatus = ModerationStatus.PENDING
+    const platformSettings = await prisma.platformSettings.findUnique({
+      where: { id: "platform" },
+      select: { autoApprovePublicNonAnonymous: true },
+    })
+    moderationStatus = platformSettings?.autoApprovePublicNonAnonymous
+      ? ModerationStatus.APPROVED
+      : ModerationStatus.PENDING
     mentorId = null
   } else {
     isAnonymous = true
