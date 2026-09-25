@@ -272,3 +272,10 @@ model EmailVerification {
   @@index([email, expiresAt])
   @@index([email, createdAt])
 }
+
+
+model PlatformSettings {
+  id                              String   @id @default("platform")
+  autoApprovePublicNonAnonymous   Boolean  @default(false)
+  updatedAt                       DateTime @updatedAt
+}
