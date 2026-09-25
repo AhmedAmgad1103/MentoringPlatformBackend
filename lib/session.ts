@@ -6,6 +6,7 @@ export type CurrentUser = {
   id: string
   email: string
   name: string | null
+  avatarUrl: string | null
   role: Role
   mentorStatus: MentorStatus
   assignedMentorId: string | null
@@ -15,6 +16,7 @@ const userSelect = {
   id: true,
   email: true,
   name: true,
+  avatarUrl: true,
   role: true,
   mentorStatus: true,
   assignedMentorId: true,
