@@ -259,3 +259,16 @@ model QuestionReport {
   @@index([reporterId])
   @@index([status, createdAt])
 }
+
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
+
+  @@index([email, expiresAt])
+  @@index([email, createdAt])
+}
