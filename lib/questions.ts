@@ -60,7 +60,7 @@ const baseSelect = {
   createdAt: true,
   updatedAt: true,
   studentId: true,
-  student: { select: { id: true, name: true } },
+  student: { select: { id: true, name: true, avatarUrl: true } },
   mentor: { select: { id: true, name: true } },
   _count: { select: { boosts: true, answers: true, reports: true } },
 } satisfies Prisma.QuestionSelect
