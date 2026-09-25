@@ -8,7 +8,7 @@ async function getSignedInUser() {
   return prisma.user.findUnique({
     where: { email },
     include: {
-      assignedMentor: { select: { id: true, name: true } },
+      assignedMentor: { select: { id: true, name: true, avatarUrl: true } },
     },
   })
 }
@@ -69,7 +69,7 @@ export async function PATCH(request: Request) {
       name: true,
       avatarUrl: true,
       role: true,
-      assignedMentor: { select: { id: true, name: true } },
+      assignedMentor: { select: { id: true, name: true, avatarUrl: true } },
     },
   })
 
