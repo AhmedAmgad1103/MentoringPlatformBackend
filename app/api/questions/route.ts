@@ -11,6 +11,14 @@ export async function GET() {
       category: true,
       status: true,
       createdAt: true,
+      student: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
     },
   })
 
