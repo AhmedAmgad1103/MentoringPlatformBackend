@@ -29,7 +29,7 @@ export async function awardMentorPoints(
 ) {
   const month = getRewardCycle()
 
-  return tx.mentorPoint.upsert({
+  const reward = await tx.mentorPoint.upsert({
     where: { eventKey: input.eventKey },
     update: {
       points: input.points,
@@ -47,6 +47,33 @@ export async function awardMentorPoints(
       voterId: input.voterId,
     },
   })
+
+  if (input.points > 0) {
+    const reasonText: Record<MentorPointReason, string> = {
+      ANSWER: "answer a student's question",
+      FAST_RESPONSE: "answer within 24 hours",
+      HELPFUL_VOTE: "receive a helpful vote",
+      ANY_MENTOR_RESPONSE: "answer an Ask Any Mentor question",
+    }
+
+    await tx.notification.upsert({
+      where: { dedupeKey: `mentor-reward:${input.eventKey}` },
+      update: {
+        title: `You earned +${input.points} mentor points`,
+        message: `You earned +${input.points} points for ${reasonText[input.reason]}.`,
+        kind: "MENTOR_REWARD_EARNED",
+      },
+      create: {
+        userId: input.mentorId,
+        title: `You earned +${input.points} mentor points`,
+        message: `You earned +${input.points} points for ${reasonText[input.reason]}.`,
+        kind: "MENTOR_REWARD_EARNED",
+        dedupeKey: `mentor-reward:${input.eventKey}`,
+      },
+    })
+  }
+
+  return reward
 }
 
 export async function setHelpfulVoteReward(
@@ -61,7 +88,7 @@ export async function setHelpfulVoteReward(
   const month = getRewardCycle()
   const eventKey = `helpful:${month}:${input.answerId}:${input.voterId}`
 
-  return tx.mentorPoint.upsert({
+  const reward = await tx.mentorPoint.upsert({
     where: { eventKey },
     update: {
       points: input.active ? REWARD_POINTS.HELPFUL_VOTE : 0,
@@ -77,4 +104,24 @@ export async function setHelpfulVoteReward(
       voterId: input.voterId,
     },
   })
+
+  if (input.active) {
+    await tx.notification.upsert({
+      where: { dedupeKey: `mentor-reward:${eventKey}` },
+      update: {
+        title: `You earned +${REWARD_POINTS.HELPFUL_VOTE} mentor points`,
+        message: `You earned +${REWARD_POINTS.HELPFUL_VOTE} points because a student marked your answer helpful.`,
+        kind: "MENTOR_REWARD_EARNED",
+      },
+      create: {
+        userId: input.mentorId,
+        title: `You earned +${REWARD_POINTS.HELPFUL_VOTE} mentor points`,
+        message: `You earned +${REWARD_POINTS.HELPFUL_VOTE} points because a student marked your answer helpful.`,
+        kind: "MENTOR_REWARD_EARNED",
+        dedupeKey: `mentor-reward:${eventKey}`,
+      },
+    })
+  }
+
+  return reward
 }
