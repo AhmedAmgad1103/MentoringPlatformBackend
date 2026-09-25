@@ -24,6 +24,7 @@ export async function GET() {
       id: true,
       name: true,
       email: true,
+      avatarUrl: true,
       mentorStatus: true,
       _count: {
         select: {
@@ -43,6 +44,7 @@ export async function GET() {
       id: mentor.id,
       name: mentor.name,
       email: mentor.email,
+      avatarUrl: mentor.avatarUrl,
       mentorStatus: mentor.mentorStatus,
       answerCount: mentor._count.answers,
       studentCount: mentor._count.assignedStudents,
