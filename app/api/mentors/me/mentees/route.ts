@@ -20,6 +20,7 @@ export async function GET() {
       id: true,
       name: true,
       email: true,
+      avatarUrl: true,
       createdAt: true,
       _count: {
         select: {
@@ -34,6 +35,7 @@ export async function GET() {
       id: item.id,
       name: item.name,
       email: item.email,
+      avatarUrl: item.avatarUrl,
       createdAt: item.createdAt,
       questionCount: item._count.questions,
     })),
