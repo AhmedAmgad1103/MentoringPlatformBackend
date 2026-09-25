@@ -13,7 +13,7 @@ export async function GET() {
     user.assignedMentorId
       ? prisma.user.findUnique({
           where: { id: user.assignedMentorId },
-          select: { id: true, name: true },
+          select: { id: true, name: true, avatarUrl: true },
         })
       : Promise.resolve(null),
     user.role === "STUDENT"
@@ -103,6 +103,7 @@ export async function PATCH(request: Request) {
         select: {
           id: true,
           name: true,
+          avatarUrl: true,
         },
       },
     },
