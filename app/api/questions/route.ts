@@ -81,6 +81,14 @@ export async function GET(request: Request) {
             : {}
 
   const filters: Prisma.QuestionWhereInput = {}
+  const search = (params.get("search") ?? params.get("q") ?? "").trim()
+  if (search) {
+    filters.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { content: { contains: search, mode: "insensitive" } },
+    ]
+  }
+
 
   const category = params.get("category")
   if (category) {
