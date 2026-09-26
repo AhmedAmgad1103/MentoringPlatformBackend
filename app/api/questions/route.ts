@@ -31,6 +31,7 @@ const ASK_TYPES = ["MY_MENTOR", "ANY_MENTOR", "ANONYMOUS"] as const
 const TITLE_MAX = 150
 const CONTENT_MIN = 10
 const CONTENT_MAX = 5000
+const MAX_ATTACHMENTS = 5
 
 function isEnumValue<T extends Record<string, string>>(
   e: T,
@@ -192,6 +193,30 @@ export async function POST(request: Request) {
     if (privacy === "anon-private") body.visibility = "PRIVATE"
   }
 
+  let attachments: Array<{ url: string; name: string; type: string; size: number }> = []
+  if (body.attachments !== undefined) {
+    if (!Array.isArray(body.attachments) || body.attachments.length > MAX_ATTACHMENTS) {
+      return badRequest(`attachments must be an array with at most ${MAX_ATTACHMENTS} files`)
+    }
+    attachments = body.attachments.map((item) => {
+      if (!item || typeof item !== "object") return null
+      const value = item as Record<string, unknown>
+      if (
+        typeof value.url !== "string" ||
+        typeof value.name !== "string" ||
+        typeof value.type !== "string" ||
+        typeof value.size !== "number"
+      ) return null
+      return {
+        url: value.url,
+        name: value.name.slice(0, 255),
+        type: value.type.slice(0, 120),
+        size: Math.max(0, Math.floor(value.size)),
+      }
+    }).filter((item): item is { url: string; name: string; type: string; size: number } => item !== null)
+    if (attachments.length !== body.attachments.length) return badRequest("Invalid attachment metadata")
+  }
+
   let mentorId: string | null = null
   let visibility: QuestionVisibility = QuestionVisibility.PRIVATE
   let isAnonymous = false
@@ -257,6 +282,7 @@ export async function POST(request: Request) {
     data: {
       title,
       content,
+      attachments: attachments.length ? attachments : undefined,
       category,
       visibility,
       isAnonymous,
