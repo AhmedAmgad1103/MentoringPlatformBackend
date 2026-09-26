@@ -1,5 +1,7 @@
-import { getCurrentUser } from "@/lib/session"
+import { auth } from "@/auth"
+import { prisma } from "@/lib/prisma"
 import { badRequest, unauthorized } from "@/lib/api"
+import { Role } from "@prisma/client"
 import crypto from "node:crypto"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -50,8 +52,18 @@ async function ensureBucket(url: string, serviceKey: string, bucket: string) {
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser()
-  if (!user) return unauthorized()
+  const session = await auth()
+  const email = session?.user?.email?.trim().toLowerCase()
+  if (!email) return unauthorized()
+
+  const rawRole = String((session.user as unknown as { role?: string })?.role ?? "").toLowerCase()
+  const role = rawRole === "mentor" ? Role.MENTOR : rawRole === "admin" ? Role.ADMIN : Role.STUDENT
+  const user = await prisma.user.upsert({
+    where: { email_role: { email, role } },
+    update: {},
+    create: { email, name: email.split("@")[0], role },
+    select: { id: true, role: true },
+  })
 
   const form = await request.formData()
   const file = form.get("file")
