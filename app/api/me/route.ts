@@ -82,8 +82,12 @@ export async function PATCH(request: Request) {
     if (avatarUrl !== null && avatarUrl.length > AVATAR_MAX) {
       return badRequest("avatarUrl is too large")
     }
-    if (avatarUrl !== null && !avatarUrl.startsWith("data:image/")) {
-      return badRequest("avatarUrl must be an image data URL")
+    if (
+      avatarUrl !== null &&
+      !avatarUrl.startsWith("data:image/") &&
+      !/^https?:\/\//i.test(avatarUrl)
+    ) {
+      return badRequest("avatarUrl must be an image URL")
     }
   }
 
