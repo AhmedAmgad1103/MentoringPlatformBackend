@@ -52,6 +52,7 @@ const baseSelect = {
   id: true,
   title: true,
   content: true,
+  attachments: true,
   category: true,
   visibility: true,
   isAnonymous: true,
@@ -99,9 +100,11 @@ export function toQuestionDTO(row: ListRow | DetailRow, viewer: CurrentUser) {
   const hideStudent = row.isAnonymous && viewer.role !== Role.ADMIN
 
   const { studentId, student, _count, boosts, reports, ...rest } = row
+  const attachments = Array.isArray(row.attachments) ? row.attachments : []
 
   return {
     ...rest,
+    attachments,
     isMine: studentId === viewer.id,
     student: hideStudent ? null : student,
     boostCount: _count.boosts,
