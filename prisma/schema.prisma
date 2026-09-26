@@ -102,6 +102,7 @@ model Question {
   id                String             @id @default(cuid())
   title             String
   content           String
+  attachments       Json?
   category          QuestionCategory   @default(OTHER)
   visibility        QuestionVisibility @default(PRIVATE)
   isAnonymous       Boolean            @default(false)
